@@ -1,0 +1,1945 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>SentinelDocs — Privacy Firewall</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Bebas+Neue&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --c0: #000308;
+        --c1: #020510;
+        --c2: #050d1f;
+        --c3: #0a1628;
+        --accent: #00f5c4;
+        --accent2: #7b5ea7;
+        --accent3: #ff4d6d;
+        --amber: #f59e0b;
+        --blue: #3b82f6;
+        --t1: #e8f4f8;
+        --t2: #7a9ab0;
+        --t3: #3d5a6b;
+        --bdr: rgba(0, 245, 196, 0.12);
+        --bdr2: rgba(0, 245, 196, 0.25);
+        --surf: rgba(0, 245, 196, 0.03);
+        --surf2: rgba(0, 245, 196, 0.07);
+        --fh: "Bebas Neue", sans-serif;
+        --fb: "Space Grotesk", sans-serif;
+        --fm: "JetBrains Mono", monospace;
+        --r8: 8px;
+        --r12: 12px;
+        --r16: 16px;
+        --r24: 24px;
+        --glow: 0 0 20px rgba(0, 245, 196, 0.15);
+        --glow2: 0 0 40px rgba(0, 245, 196, 0.08);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: var(--fb);
+        background: var(--c0);
+        color: var(--t1);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.025) 2px,
+          rgba(0, 0, 0, 0.025) 4px
+        );
+      }
+      .grid-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-image:
+          linear-gradient(rgba(0, 245, 196, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 245, 196, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        mask-image: radial-gradient(
+          ellipse 80% 80% at 50% 50%,
+          black 0%,
+          transparent 100%
+        );
+      }
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        filter: blur(80px);
+      }
+      .o1 {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 245, 196, 0.08),
+          transparent 70%
+        );
+        top: -100px;
+        right: -100px;
+        animation: d1 20s ease-in-out infinite;
+      }
+      .o2 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(
+          circle,
+          rgba(123, 94, 167, 0.1),
+          transparent 70%
+        );
+        bottom: -80px;
+        left: -80px;
+        animation: d2 25s ease-in-out infinite;
+      }
+      .o3 {
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 77, 109, 0.06),
+          transparent 70%
+        );
+        top: 40%;
+        left: 20%;
+        animation: d3 15s ease-in-out infinite;
+      }
+      @keyframes d1 {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(-30px, 40px);
+        }
+      }
+      @keyframes d2 {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(40px, -30px);
+        }
+      }
+      @keyframes d3 {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(-20px, 20px);
+        }
+      }
+
+      /* AUTH */
+      #auth-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        background: var(--c0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: clip-path 0.9s cubic-bezier(0.77, 0, 0.175, 1);
+        clip-path: inset(0 0 0 0);
+        padding: 20px;
+      }
+      #auth-overlay.exit {
+        clip-path: inset(0 0 100% 0);
+      }
+      .auth-wrap {
+        width: 100%;
+        max-width: 460px;
+        position: relative;
+        z-index: 1;
+      }
+      .auth-brand {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      .brand-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 245, 196, 0.15),
+          rgba(123, 94, 167, 0.15)
+        );
+        border: 1px solid var(--bdr2);
+        margin-bottom: 16px;
+        box-shadow: var(--glow);
+      }
+      .brand-icon svg {
+        width: 32px;
+        height: 32px;
+        color: var(--accent);
+      }
+      .auth-brand h1 {
+        font-family: var(--fh);
+        font-size: 44px;
+        letter-spacing: 4px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .auth-brand p {
+        font-family: var(--fm);
+        font-size: 10px;
+        color: var(--t3);
+        letter-spacing: 3px;
+        margin-top: 4px;
+      }
+      .auth-card {
+        background: rgba(5, 13, 31, 0.95);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r24);
+        padding: 40px;
+        backdrop-filter: blur(20px);
+        box-shadow:
+          var(--glow2),
+          inset 0 1px 0 rgba(0, 245, 196, 0.08);
+        position: relative;
+        overflow: hidden;
+      }
+      .auth-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        opacity: 0.4;
+      }
+      .auth-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        background: var(--c3);
+        border-radius: var(--r12);
+        padding: 4px;
+        margin-bottom: 28px;
+      }
+      .auth-tab {
+        padding: 10px;
+        text-align: center;
+        border-radius: var(--r8);
+        font-family: var(--fm);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--t3);
+        cursor: pointer;
+        transition: all 0.25s;
+        letter-spacing: 2px;
+      }
+      .auth-tab.active {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 245, 196, 0.15),
+          rgba(123, 94, 167, 0.1)
+        );
+        color: var(--accent);
+        border: 1px solid var(--bdr);
+        box-shadow: 0 0 16px rgba(0, 245, 196, 0.1);
+      }
+      .afield {
+        margin-bottom: 18px;
+      }
+      .afield label {
+        display: block;
+        font-family: var(--fm);
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+      .ainput {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r12);
+        padding: 14px 16px;
+        color: var(--t1);
+        font-family: var(--fb);
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+      }
+      .ainput:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 245, 196, 0.1);
+      }
+      .ainput::placeholder {
+        color: var(--t3);
+      }
+      .auth-err {
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--accent3);
+        margin-bottom: 16px;
+        padding: 10px 14px;
+        background: rgba(255, 77, 109, 0.1);
+        border: 1px solid rgba(255, 77, 109, 0.2);
+        border-radius: var(--r8);
+        display: none;
+      }
+      .btn-auth {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: var(--r16);
+        font-family: var(--fh);
+        font-size: 22px;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 245, 196, 0.9),
+          rgba(0, 200, 160, 0.9)
+        );
+        color: #000308;
+      }
+      .btn-auth:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(0, 245, 196, 0.35);
+      }
+      .trust-pill {
+        margin-top: 20px;
+        padding: 12px 16px;
+        background: rgba(0, 245, 196, 0.05);
+        border: 1px solid rgba(0, 245, 196, 0.1);
+        border-radius: var(--r12);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--accent);
+      }
+
+      /* TOPBAR */
+      #dashboard {
+        display: none;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+      }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 40px;
+        height: 64px;
+        background: rgba(0, 3, 8, 0.88);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--bdr);
+      }
+      .tb-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .tb-brand h1 {
+        font-family: var(--fh);
+        font-size: 28px;
+        letter-spacing: 3px;
+        color: var(--accent);
+      }
+      .tb-brand span {
+        font-family: var(--fm);
+        font-size: 10px;
+        color: var(--t3);
+        letter-spacing: 1px;
+        padding: 3px 8px;
+        border: 1px solid var(--bdr);
+        border-radius: 4px;
+      }
+      .tb-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .eng-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--fm);
+        font-size: 11px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: rgba(0, 245, 196, 0.05);
+        border: 1px solid var(--bdr);
+        transition: all 0.3s;
+      }
+      .eng-pill.active {
+        color: var(--accent);
+        border-color: rgba(0, 245, 196, 0.3);
+      }
+      .eng-pill.offline {
+        color: var(--accent3);
+        border-color: rgba(255, 77, 109, 0.3);
+      }
+      .sdot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: blink 2s infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .uchip {
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--t2);
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: rgba(123, 94, 167, 0.1);
+        border: 1px solid rgba(123, 94, 167, 0.2);
+      }
+      .sout {
+        background: none;
+        border: none;
+        color: var(--t3);
+        font-family: var(--fm);
+        font-size: 11px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: color 0.2s;
+      }
+      .sout:hover {
+        color: var(--accent3);
+      }
+
+      /* MAIN */
+      .main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+      .hero {
+        text-align: center;
+        margin-bottom: 56px;
+      }
+      .hero-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        padding: 6px 16px;
+        background: rgba(0, 245, 196, 0.07);
+        border: 1px solid var(--bdr);
+        border-radius: 20px;
+        margin-bottom: 24px;
+      }
+      .hero h2 {
+        font-family: var(--fh);
+        font-size: clamp(52px, 9vw, 88px);
+        letter-spacing: 4px;
+        line-height: 0.9;
+        background: linear-gradient(135deg, var(--t1) 40%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+      }
+      .hero p {
+        font-size: 15px;
+        color: var(--t2);
+        max-width: 500px;
+        margin: 0 auto;
+        line-height: 1.8;
+      }
+
+      /* UPLOAD */
+      .drop-zone {
+        border: 1px solid var(--bdr);
+        border-radius: var(--r24);
+        padding: 64px 40px;
+        text-align: center;
+        cursor: pointer;
+        background: var(--surf);
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+      .drop-zone::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(0, 245, 196, 0.05) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .drop-zone:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: var(--glow);
+      }
+      .drop-zone:hover::before {
+        opacity: 1;
+      }
+      .drop-zone.drag {
+        border-color: var(--accent);
+        box-shadow: 0 0 40px rgba(0, 245, 196, 0.2);
+      }
+      .dz-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 24px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 245, 196, 0.1),
+          rgba(123, 94, 167, 0.1)
+        );
+        border: 1px solid var(--bdr);
+      }
+      .dz-icon svg {
+        width: 36px;
+        height: 36px;
+        color: var(--accent);
+      }
+      .dz-title {
+        font-family: var(--fh);
+        font-size: 32px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+      .dz-sub {
+        font-size: 14px;
+        color: var(--t3);
+        margin-bottom: 20px;
+      }
+      .dz-fmts {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+      .fmt {
+        font-family: var(--fm);
+        font-size: 10px;
+        color: var(--accent);
+        padding: 4px 12px;
+        border-radius: 4px;
+        background: rgba(0, 245, 196, 0.07);
+        border: 1px solid var(--bdr);
+        letter-spacing: 1px;
+      }
+      .fchip {
+        margin-top: 16px;
+        padding: 14px 20px;
+        background: rgba(0, 245, 196, 0.05);
+        border: 1px solid var(--bdr2);
+        border-radius: var(--r12);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .fchip-name {
+        font-family: var(--fm);
+        font-size: 13px;
+        color: var(--accent);
+      }
+      .fchip-clear {
+        background: none;
+        border: none;
+        color: var(--accent3);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+      }
+      .btn-scan {
+        width: 100%;
+        margin-top: 20px;
+        padding: 20px;
+        border: none;
+        border-radius: var(--r16);
+        cursor: pointer;
+        font-family: var(--fh);
+        font-size: 24px;
+        letter-spacing: 3px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 245, 196, 0.9),
+          rgba(0, 180, 140, 0.9)
+        );
+        color: #000308;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-scan:disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .btn-scan:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 245, 196, 0.35);
+      }
+      .trust-bar {
+        margin-top: 16px;
+        padding: 12px 20px;
+        background: rgba(0, 245, 196, 0.04);
+        border: 1px solid rgba(0, 245, 196, 0.08);
+        border-radius: var(--r12);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--t3);
+      }
+      .trust-bar svg {
+        flex-shrink: 0;
+        color: var(--accent);
+      }
+
+      /* PROGRESS */
+      #progress-stage {
+        display: none;
+      }
+      .prog-card {
+        background: var(--c2);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r24);
+        padding: 48px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .prog-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        animation: scanline 2s ease-in-out infinite;
+      }
+      @keyframes scanline {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      .prog-head {
+        font-family: var(--fh);
+        font-size: 36px;
+        letter-spacing: 4px;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .prog-sub {
+        font-family: var(--fm);
+        font-size: 12px;
+        color: var(--t3);
+        margin-bottom: 32px;
+        letter-spacing: 1px;
+      }
+      .prog-bar-wrap {
+        height: 4px;
+        background: rgba(0, 245, 196, 0.08);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 32px;
+      }
+      .prog-fill {
+        height: 100%;
+        border-radius: 2px;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent2), var(--accent));
+        transition: width 0.4s;
+        box-shadow: 0 0 10px var(--accent);
+      }
+      .prog-steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .pstep {
+        padding: 20px 16px;
+        border-radius: var(--r12);
+        border: 1px solid var(--bdr);
+        background: var(--c3);
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--t3);
+        letter-spacing: 1px;
+        transition: all 0.3s;
+      }
+      .pstep.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(0, 245, 196, 0.07);
+        box-shadow: 0 0 20px rgba(0, 245, 196, 0.08);
+      }
+      .pstep.done {
+        border-color: rgba(0, 245, 196, 0.3);
+        color: rgba(0, 245, 196, 0.5);
+        background: rgba(0, 245, 196, 0.03);
+      }
+      .pstep-icon {
+        font-size: 22px;
+        margin-bottom: 10px;
+      }
+
+      /* RESULTS */
+      #results-stage {
+        display: none;
+      }
+      .res-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .risk-card {
+        background: var(--c2);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r24);
+        padding: 36px 32px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        grid-column: 1/-1;
+      }
+      .risk-card::after {
+        content: "THREAT";
+        position: absolute;
+        font-family: var(--fh);
+        font-size: 140px;
+        letter-spacing: 10px;
+        color: rgba(0, 245, 196, 0.02);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      .gauge-wrap {
+        position: relative;
+        width: 280px;
+        height: 150px;
+        margin: 0 auto 16px;
+      }
+      .gauge-svg {
+        width: 280px;
+        height: 150px;
+      }
+      .g-track {
+        fill: none;
+        stroke: rgba(0, 245, 196, 0.06);
+        stroke-width: 20;
+        stroke-linecap: round;
+      }
+      .g-fill {
+        fill: none;
+        stroke-width: 20;
+        stroke-linecap: round;
+        stroke-dasharray: 346;
+        stroke-dashoffset: 346;
+        transition:
+          stroke-dashoffset 2s cubic-bezier(0.19, 1, 0.22, 1),
+          stroke 0.5s;
+        stroke: var(--accent);
+      }
+      .gneedle {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 3px;
+        height: 128px;
+        background: linear-gradient(
+          to top,
+          transparent 0%,
+          rgba(255, 255, 255, 0.8) 100%
+        );
+        transform-origin: bottom center;
+        transform: translateX(-50%) rotate(-90deg);
+        transition: transform 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border-radius: 3px 3px 0 0;
+      }
+      .gneedle::after {
+        content: "";
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+      }
+      .gscore {
+        font-family: var(--fh);
+        font-size: 64px;
+        letter-spacing: 2px;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .glabel {
+        font-family: var(--fm);
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--t3);
+      }
+      .scard {
+        background: var(--c2);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r16);
+        padding: 28px 24px;
+      }
+      .scard-val {
+        font-family: var(--fh);
+        font-size: 52px;
+        letter-spacing: 2px;
+        line-height: 1;
+      }
+      .scard-lbl {
+        font-family: var(--fm);
+        font-size: 10px;
+        color: var(--t3);
+        letter-spacing: 2px;
+        margin-top: 10px;
+      }
+      .fhead {
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--t3);
+        letter-spacing: 3px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .fhead::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--bdr);
+      }
+      .finding {
+        background: var(--c2);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r16);
+        padding: 18px 22px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .finding::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--accent3);
+      }
+      .finding.med::before {
+        background: var(--amber);
+      }
+      .finding:hover {
+        transform: translateX(4px);
+        border-color: var(--bdr2);
+      }
+      .ftype {
+        font-family: var(--fh);
+        font-size: 18px;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+      .fmatch {
+        font-family: var(--fm);
+        font-size: 12px;
+        color: var(--t3);
+      }
+      .rtag {
+        font-family: var(--fm);
+        font-size: 10px;
+        letter-spacing: 2px;
+        padding: 5px 14px;
+        border-radius: 20px;
+      }
+      .rtag.HIGH {
+        background: rgba(255, 77, 109, 0.12);
+        color: var(--accent3);
+        border: 1px solid rgba(255, 77, 109, 0.25);
+      }
+      .rtag.MEDIUM {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--amber);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+      .btn-redact {
+        width: 100%;
+        margin-top: 24px;
+        padding: 20px;
+        border: none;
+        border-radius: var(--r16);
+        cursor: pointer;
+        font-family: var(--fh);
+        font-size: 24px;
+        letter-spacing: 3px;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 77, 109, 0.9),
+          rgba(180, 30, 60, 0.9)
+        );
+        color: #fff;
+        transition: all 0.3s;
+      }
+      .btn-redact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(255, 77, 109, 0.3);
+      }
+      .btn-redact:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* SUCCESS */
+      #success-stage {
+        display: none;
+      }
+      .succ-card {
+        background: var(--c2);
+        border: 2px solid rgba(0, 245, 196, 0.3);
+        border-radius: var(--r24);
+        padding: 64px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .succ-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at 50% 0%,
+          rgba(0, 245, 196, 0.07),
+          transparent 60%
+        );
+      }
+      .confetti-wrap {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 1;
+      }
+      .cp {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        animation: cfall 3s ease-in forwards;
+      }
+      @keyframes cfall {
+        0% {
+          transform: translateY(-20px) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+      .succ-icon {
+        font-size: 64px;
+        margin-bottom: 24px;
+        display: block;
+        position: relative;
+      }
+      .succ-title {
+        font-family: var(--fh);
+        font-size: 56px;
+        letter-spacing: 5px;
+        color: var(--accent);
+        margin-bottom: 12px;
+        position: relative;
+      }
+      .succ-sub {
+        font-size: 15px;
+        color: var(--t2);
+        margin-bottom: 40px;
+        position: relative;
+        line-height: 1.7;
+      }
+      .btn-dl {
+        width: 100%;
+        padding: 20px;
+        border: none;
+        border-radius: var(--r16);
+        cursor: pointer;
+        font-family: var(--fh);
+        font-size: 24px;
+        letter-spacing: 3px;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 245, 196, 0.9),
+          rgba(0, 180, 140, 0.9)
+        );
+        color: #000;
+        margin-bottom: 12px;
+        transition: all 0.3s;
+      }
+      .btn-dl:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 245, 196, 0.35);
+      }
+      .btn-ghost {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--bdr);
+        background: transparent;
+        border-radius: var(--r12);
+        cursor: pointer;
+        font-family: var(--fm);
+        font-size: 12px;
+        color: var(--t3);
+        letter-spacing: 2px;
+        transition: all 0.2s;
+      }
+      .btn-ghost:hover {
+        border-color: var(--bdr2);
+        color: var(--t2);
+      }
+      .trust-succ {
+        margin-top: 24px;
+        padding: 14px 20px;
+        background: rgba(0, 245, 196, 0.04);
+        border: 1px solid rgba(0, 245, 196, 0.1);
+        border-radius: var(--r12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--accent);
+        position: relative;
+      }
+
+      /* DB VIEWER */
+      .db-panel {
+        background: var(--c2);
+        border: 1px solid var(--bdr);
+        border-radius: var(--r16);
+        padding: 24px;
+        margin-top: 20px;
+      }
+      .db-title {
+        font-family: var(--fh);
+        font-size: 20px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .db-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--c3);
+        border-radius: var(--r8);
+        margin-bottom: 8px;
+        border: 1px solid var(--bdr);
+      }
+      .db-email {
+        font-family: var(--fm);
+        font-size: 12px;
+        color: var(--t1);
+      }
+      .db-meta {
+        font-family: var(--fm);
+        font-size: 10px;
+        color: var(--t3);
+      }
+      .db-empty {
+        font-family: var(--fm);
+        font-size: 12px;
+        color: var(--t3);
+        text-align: center;
+        padding: 20px;
+        letter-spacing: 1px;
+      }
+      .db-badge {
+        font-family: var(--fm);
+        font-size: 9px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: rgba(0, 245, 196, 0.1);
+        color: var(--accent);
+        border: 1px solid var(--bdr);
+        letter-spacing: 1px;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 32px;
+        border-top: 1px solid var(--bdr);
+        font-family: var(--fm);
+        font-size: 11px;
+        color: var(--t3);
+        position: relative;
+        z-index: 1;
+        letter-spacing: 1px;
+        line-height: 1.8;
+      }
+      .footer em {
+        color: var(--accent);
+        font-style: normal;
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid-bg"></div>
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
+
+    <!-- AUTH -->
+    <div id="auth-overlay">
+      <div class="auth-wrap">
+        <div class="auth-brand">
+          <div class="brand-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <h1>SENTINELDOCS</h1>
+          <p>PRIVACY FIREWALL v2.0</p>
+        </div>
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <div
+              class="auth-tab active"
+              id="tlogin"
+              onclick="switchTab('login')"
+            >
+              LOGIN
+            </div>
+            <div class="auth-tab" id="tsignup" onclick="switchTab('signup')">
+              SIGN UP
+            </div>
+          </div>
+          <div id="field-name" class="afield hidden">
+            <label>FULL NAME</label>
+            <input
+              class="ainput"
+              type="text"
+              id="inp-name"
+              placeholder="Ajay Kumar"
+              onkeydown="ke(event)"
+            />
+          </div>
+          <div class="afield">
+            <label>EMAIL ADDRESS</label>
+            <input
+              class="ainput"
+              type="email"
+              id="inp-email"
+              placeholder="user@sentinel.io"
+              onkeydown="ke(event)"
+            />
+          </div>
+          <div class="afield">
+            <label>ACCESS KEY</label>
+            <input
+              class="ainput"
+              type="password"
+              id="inp-pass"
+              placeholder="••••••••"
+              onkeydown="ke(event)"
+            />
+          </div>
+          <div id="auth-err" class="auth-err"></div>
+          <button class="btn-auth" onclick="submitAuth()">
+            AUTHORIZE SESSION
+          </button>
+          <div class="trust-pill">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Your data is 100% safe — we never store your documents
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+      <div class="topbar">
+        <div class="tb-brand">
+          <h1>SENTINELDOCS</h1>
+          <span>v2.0</span>
+        </div>
+        <div class="tb-right">
+          <div class="eng-pill active" id="eng-pill">
+            <div class="sdot"></div>
+            <span id="eng-lbl">ENGINE ACTIVE</span>
+          </div>
+          <div class="uchip" id="uchip">USER</div>
+          <button class="sout" onclick="signOut()">[ SIGN OUT ]</button>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="hero">
+          <div class="hero-tag">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            PRIVACY-FIRST DOCUMENT SCANNER
+          </div>
+          <h2>DETECT.<br />REDACT.<br />PROTECT.</h2>
+          <p>
+            Real-time PII detection for Aadhaar, PAN, DL, Passport & more —
+            powered by dual-layer Regex + NLP engine
+          </p>
+        </div>
+
+        <!-- UPLOAD -->
+        <section id="upload-stage">
+          <input
+            type="file"
+            id="file-input"
+            class="hidden"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onchange="handleFile(this.files[0])"
+          />
+          <div
+            class="drop-zone"
+            id="drop-zone"
+            onclick="document.getElementById('file-input').click()"
+            ondragover="oDO(event)"
+            ondragleave="oDL()"
+            ondrop="oDD(event)"
+          >
+            <div class="dz-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+            </div>
+            <div class="dz-title">INGEST DOCUMENT</div>
+            <div class="dz-sub">
+              Drop file here or click to browse — analysis is ephemeral, files
+              are never stored
+            </div>
+            <div class="dz-fmts">
+              <span class="fmt">PDF</span><span class="fmt">JPG</span
+              ><span class="fmt">PNG</span><span class="fmt">JPEG</span>
+            </div>
+          </div>
+          <div id="fchip" class="fchip hidden">
+            <span class="fchip-name" id="fchip-name"></span>
+            <button class="fchip-clear" onclick="clearFile()">✕</button>
+          </div>
+          <button class="btn-scan" id="scan-btn" disabled onclick="runScan()">
+            INITIALIZE SECURITY AUDIT
+          </button>
+          <div class="trust-bar">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Your data is 100% safe — SentinelDocs never stores, transmits, or
+            logs your documents
+          </div>
+
+          <!-- USER DATABASE VIEWER -->
+          <div class="db-panel" style="margin-top: 32px">
+            <div class="db-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <ellipse cx="12" cy="5" rx="9" ry="3" />
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+              </svg>
+              USER DATABASE
+              <span
+                style="
+                  font-family: var(--fm);
+                  font-size: 11px;
+                  color: var(--t3);
+                  margin-left: auto;
+                "
+                >localStorage</span
+              >
+            </div>
+            <div id="db-rows"></div>
+          </div>
+        </section>
+
+        <!-- PROGRESS -->
+        <section id="progress-stage">
+          <div class="prog-card">
+            <div class="prog-head">ANALYZING</div>
+            <div class="prog-sub" id="prog-lbl">INITIALIZING ENGINE...</div>
+            <div class="prog-bar-wrap">
+              <div class="prog-fill" id="prog-fill"></div>
+            </div>
+            <div class="prog-steps">
+              <div class="pstep" id="ps0">
+                <div class="pstep-icon">🔍</div>
+                OCR EXTRACT
+              </div>
+              <div class="pstep" id="ps1">
+                <div class="pstep-icon">🧩</div>
+                PII DETECT
+              </div>
+              <div class="pstep" id="ps2">
+                <div class="pstep-icon">🧠</div>
+                NLP LAYER
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RESULTS -->
+        <section id="results-stage">
+          <div class="res-grid">
+            <div class="risk-card">
+              <div class="gauge-wrap">
+                <svg class="gauge-svg" viewBox="0 0 280 150">
+                  <path class="g-track" d="M28 140 A 112 112 0 0 1 252 140" />
+                  <path
+                    class="g-fill"
+                    id="gfill"
+                    d="M28 140 A 112 112 0 0 1 252 140"
+                  />
+                </svg>
+                <div class="gneedle" id="gneedle"></div>
+              </div>
+              <div class="gscore" id="gscore">--</div>
+              <div class="glabel" id="glabel">THREAT SCORE</div>
+            </div>
+            <div class="scard">
+              <div class="scard-val" style="color: var(--accent3)" id="s-high">
+                0
+              </div>
+              <div class="scard-lbl">HIGH RISK ENTITIES</div>
+            </div>
+            <div class="scard">
+              <div class="scard-val" style="color: var(--accent)" id="s-total">
+                0
+              </div>
+              <div class="scard-lbl">TOTAL ENTITIES FOUND</div>
+            </div>
+            <div class="scard" style="grid-column: 1/-1">
+              <div
+                class="scard-val"
+                style="color: var(--accent2); font-size: 32px"
+                id="s-size"
+              >
+                --
+              </div>
+              <div class="scard-lbl">DOCUMENT FILE SIZE</div>
+            </div>
+          </div>
+          <div class="fhead">DETECTED PII ENTITIES</div>
+          <div id="findings-list"></div>
+          <button class="btn-redact" id="redact-btn" onclick="runRedact()">
+            🛡 SCRUB & REDACT ALL ENTITIES
+          </button>
+          <button
+            class="btn-ghost"
+            style="margin-top: 12px"
+            onclick="resetToUpload()"
+          >
+            [ SCAN ANOTHER DOCUMENT ]
+          </button>
+        </section>
+
+        <!-- SUCCESS -->
+        <section id="success-stage">
+          <div class="succ-card">
+            <div class="confetti-wrap" id="confetti"></div>
+            <span class="succ-icon" style="position: relative; z-index: 2"
+              >🛡️</span
+            >
+            <div class="succ-title" style="position: relative; z-index: 2">
+              SECURED
+            </div>
+            <p
+              class="succ-sub"
+              id="succ-sub"
+              style="position: relative; z-index: 2"
+            >
+              All sensitive entities have been permanently scrubbed.
+            </p>
+            <div style="position: relative; z-index: 10; margin-top: 32px">
+              <button class="btn-dl" id="btn-dl-main" onclick="doDownload()">
+                ⬇ DOWNLOAD PROTECTED PDF
+              </button>
+              <button
+                class="btn-ghost"
+                id="btn-scan-again"
+                onclick="resetToUpload()"
+                style="margin-top: 12px"
+              >
+                [ SCAN ANOTHER DOCUMENT ]
+              </button>
+              <div class="trust-succ" style="margin-top: 20px">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Your data is 100% safe — we don't store your data
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer">
+        <em
+          >Your data is 100% safe — SentinelDocs never stores your documents</em
+        ><br />
+        SentinelDocs Privacy Engine v2.0 &nbsp;•&nbsp; FastAPI &nbsp;•&nbsp;
+        Tesseract OCR &nbsp;•&nbsp; Regex + NLP
+      </footer>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:8000";
+      const S = { file: null, findings: [], blob: null, tab: "login" };
+      const DB_KEY = "sd_users";
+
+      /* ── USER DATABASE (localStorage) ── */
+      function getUsers() {
+        try {
+          return JSON.parse(localStorage.getItem(DB_KEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+      function saveUser(email, name) {
+        const users = getUsers();
+        const exists = users.find((u) => u.email === email);
+        if (!exists) {
+          users.push({
+            email,
+            name,
+            joined: new Date().toLocaleString(),
+            scans: 0,
+          });
+          localStorage.setItem(DB_KEY, JSON.stringify(users));
+        }
+      }
+      function incrementScan(email) {
+        const users = getUsers();
+        const u = users.find((u) => u.email === email);
+        if (u) {
+          u.scans = (u.scans || 0) + 1;
+          u.lastScan = new Date().toLocaleString();
+          localStorage.setItem(DB_KEY, JSON.stringify(users));
+        }
+      }
+      function renderDB() {
+        const rows = document.getElementById("db-rows");
+        if (!rows) return;
+        const users = getUsers();
+        if (!users.length) {
+          rows.innerHTML =
+            '<div class="db-empty">// NO USERS REGISTERED YET</div>';
+          return;
+        }
+        rows.innerHTML = users
+          .map(
+            (u) => `
+    <div class="db-row">
+      <div>
+        <div class="db-email">${u.email}</div>
+        <div class="db-meta">${u.name} &nbsp;|&nbsp; Joined: ${u.joined} &nbsp;|&nbsp; Scans: ${u.scans || 0}</div>
+      </div>
+      <span class="db-badge">ACTIVE</span>
+    </div>`,
+          )
+          .join("");
+      }
+
+      /* ── AUTH ── */
+      function switchTab(t) {
+        S.tab = t;
+        document
+          .getElementById("tlogin")
+          .classList.toggle("active", t === "login");
+        document
+          .getElementById("tsignup")
+          .classList.toggle("active", t === "signup");
+        document
+          .getElementById("field-name")
+          .classList.toggle("hidden", t === "login");
+      }
+      function ke(e) {
+        if (e.key === "Enter") submitAuth();
+      }
+      function submitAuth() {
+        const email = document.getElementById("inp-email").value.trim();
+        const pass = document.getElementById("inp-pass").value;
+        const name = document.getElementById("inp-name").value.trim();
+        const err = document.getElementById("auth-err");
+        err.style.display = "none";
+        if (!email.includes("@") || !email.includes(".") || pass.length < 4) {
+          err.textContent = "// Invalid credentials. Check email and password.";
+          err.style.display = "block";
+          return;
+        }
+        if (S.tab === "signup") {
+          if (!name) {
+            err.textContent = "// Please enter your name.";
+            err.style.display = "block";
+            return;
+          }
+          if (pass.length < 6) {
+            err.textContent = "// Password must be 6+ characters.";
+            err.style.display = "block";
+            return;
+          }
+          saveUser(email, name);
+        } else {
+          // login — save if first time
+          const users = getUsers();
+          if (!users.find((u) => u.email === email)) {
+            saveUser(email, email.split("@")[0]);
+          }
+        }
+        const dn = S.tab === "signup" ? name : email.split("@")[0];
+        localStorage.setItem("sd_session", JSON.stringify({ email, name: dn }));
+        document.getElementById("uchip").textContent = dn.toUpperCase();
+        S.currentUser = email;
+        const ov = document.getElementById("auth-overlay");
+        ov.classList.add("exit");
+        setTimeout(() => {
+          ov.style.display = "none";
+          document.getElementById("dashboard").style.display = "block";
+          renderDB();
+        }, 900);
+      }
+      function signOut() {
+        localStorage.removeItem("sd_session");
+        location.reload();
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const u = JSON.parse(localStorage.getItem("sd_session") || "null");
+        if (u) {
+          document.getElementById("uchip").textContent = u.name.toUpperCase();
+          S.currentUser = u.email;
+          document.getElementById("auth-overlay").style.display = "none";
+          document.getElementById("dashboard").style.display = "block";
+          renderDB();
+        }
+        checkEng();
+        setInterval(checkEng, 6000);
+      });
+
+      /* ── ENGINE ── */
+      async function checkEng() {
+        const p = document.getElementById("eng-pill"),
+          l = document.getElementById("eng-lbl");
+        try {
+          const r = await fetch(`${API}/`);
+          if (r.ok) {
+            p.className = "eng-pill active";
+            l.textContent = "ENGINE ACTIVE";
+          } else throw 0;
+        } catch {
+          p.className = "eng-pill offline";
+          l.textContent = "ENGINE OFFLINE";
+        }
+      }
+
+      /* ── FILE ── */
+      function handleFile(f) {
+        if (!f) return;
+        S.file = f;
+        document.getElementById("fchip-name").textContent =
+          f.name + " (" + (f.size / 1024).toFixed(1) + "KB)";
+        document.getElementById("fchip").classList.remove("hidden");
+        document.getElementById("scan-btn").disabled = false;
+      }
+      function clearFile() {
+        S.file = null;
+        document.getElementById("file-input").value = "";
+        document.getElementById("fchip").classList.add("hidden");
+        document.getElementById("scan-btn").disabled = true;
+      }
+      function oDO(e) {
+        e.preventDefault();
+        document.getElementById("drop-zone").classList.add("drag");
+      }
+      function oDL() {
+        document.getElementById("drop-zone").classList.remove("drag");
+      }
+      function oDD(e) {
+        e.preventDefault();
+        oDL();
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      }
+
+      /* ── RESET (fixes Scan Another Document) ── */
+      function resetToUpload() {
+        S.file = null;
+        S.findings = [];
+        S.blob = null;
+        // reset file input
+        try {
+          document.getElementById("file-input").value = "";
+        } catch (e) {}
+        document.getElementById("fchip").classList.add("hidden");
+        document.getElementById("scan-btn").disabled = true;
+        // reset progress bar
+        document.getElementById("prog-fill").style.width = "0%";
+        document.getElementById("prog-lbl").textContent =
+          "INITIALIZING ENGINE...";
+        ["ps0", "ps1", "ps2"].forEach((id) => {
+          const el = document.getElementById(id);
+          el.classList.remove("active", "done");
+        });
+        // reset redact button
+        const rb = document.getElementById("redact-btn");
+        if (rb) {
+          rb.disabled = false;
+          rb.textContent = "🛡 SCRUB & REDACT ALL ENTITIES";
+        }
+        // reset gauge
+        const gf = document.getElementById("gfill");
+        if (gf) {
+          gf.style.strokeDashoffset = "346";
+          gf.style.stroke = "var(--accent)";
+        }
+        const needle = document.getElementById("gneedle");
+        if (needle) {
+          needle.style.transform = "translateX(-50%) rotate(-90deg)";
+        }
+        const gscore = document.getElementById("gscore");
+        if (gscore) {
+          gscore.textContent = "--";
+          gscore.style.color = "";
+        }
+        // clear confetti
+        const conf = document.getElementById("confetti");
+        if (conf) {
+          conf.innerHTML = "";
+        }
+        // switch stages
+        hd("progress-stage");
+        hd("results-stage");
+        hd("success-stage");
+        sh("upload-stage");
+        renderDB();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      /* ── SCAN ── */
+      async function runScan() {
+        sh("progress-stage");
+        hd("upload-stage");
+        const steps = ["ps0", "ps1", "ps2"];
+        const labels = [
+          "EXTRACTING TEXT VIA OCR...",
+          "SCANNING PII PATTERNS...",
+          "RUNNING NLP LAYER 2...",
+        ];
+        let p = 0,
+          si = 0;
+        document.getElementById("ps0").classList.add("active");
+        document.getElementById("prog-lbl").textContent = labels[0];
+        const iv = setInterval(() => {
+          p = Math.min(p + Math.random() * 3.5, 90);
+          document.getElementById("prog-fill").style.width = p + "%";
+          const ni = Math.floor(p / 30);
+          if (ni > si && si < 3) {
+            document.getElementById(steps[si]).classList.remove("active");
+            document.getElementById(steps[si]).classList.add("done");
+            si = ni;
+            if (si < 3) {
+              document.getElementById(steps[si]).classList.add("active");
+              document.getElementById("prog-lbl").textContent =
+                labels[si] || labels[2];
+            }
+          }
+        }, 180);
+        try {
+          const fd = new FormData();
+          fd.append("file", S.file);
+          const res = await fetch(`${API}/scan`, { method: "POST", body: fd });
+          const data = await res.json();
+          clearInterval(iv);
+          document.getElementById("prog-fill").style.width = "100%";
+          steps.forEach((s) => {
+            document.getElementById(s).classList.remove("active");
+            document.getElementById(s).classList.add("done");
+          });
+          if (S.currentUser) incrementScan(S.currentUser);
+          setTimeout(() => {
+            S.findings = data.findings;
+            renderResults(data);
+          }, 600);
+        } catch (e) {
+          clearInterval(iv);
+          alert(
+            "Backend error. Is FastAPI running at " +
+              API +
+              "?\n\nRun: python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+          );
+          resetToUpload();
+        }
+      }
+
+      function renderResults(data) {
+        hd("progress-stage");
+        sh("results-stage");
+        const high = data.findings.filter((f) => f.risk === "HIGH").length;
+        const score = Math.min(high * 25 + data.findings.length * 5, 100);
+        setTimeout(() => {
+          const angle = (score / 100) * 180 - 90;
+          document.getElementById("gneedle").style.transform =
+            `translateX(-50%) rotate(${angle}deg)`;
+          const maxD = 346;
+          const gf = document.getElementById("gfill");
+          gf.style.strokeDashoffset = maxD - (score / 100) * maxD;
+          const col =
+            score > 70
+              ? "var(--accent3)"
+              : score > 40
+                ? "var(--amber)"
+                : "var(--accent)";
+          gf.style.stroke = col;
+          const sc = document.getElementById("gscore");
+          sc.textContent = score + "/100";
+          sc.style.color = col;
+          document.getElementById("glabel").textContent =
+            score > 70
+              ? "CRITICAL THREAT"
+              : score > 40
+                ? "MODERATE RISK"
+                : "LOW RISK";
+        }, 100);
+        document.getElementById("s-high").textContent = high;
+        document.getElementById("s-total").textContent = data.findings.length;
+        document.getElementById("s-size").textContent =
+          (S.file.size / 1024).toFixed(1) + " KB";
+        const fl = document.getElementById("findings-list");
+        fl.innerHTML =
+          data.findings.length === 0
+            ? '<div style="text-align:center;padding:32px;font-family:var(--fm);font-size:13px;color:var(--accent);border:1px solid var(--bdr);border-radius:var(--r16)">✓ NO SENSITIVE DATA DETECTED — DOCUMENT IS CLEAN</div>'
+            : data.findings
+                .map(
+                  (f) => `
+      <div class="finding ${f.risk === "MEDIUM" ? "med" : ""}">
+        <div><div class="ftype">${f.type}</div><div class="fmatch">${f.matches.join(" • ")}</div></div>
+        <span class="rtag ${f.risk}">${f.risk}</span>
+      </div>`,
+                )
+                .join("");
+      }
+
+      /* ── REDACT ── */
+      async function runRedact() {
+        const btn = document.getElementById("redact-btn");
+        btn.disabled = true;
+        btn.textContent = "⏳ REDACTING...";
+        try {
+          const fd = new FormData();
+          fd.append("file", S.file);
+          const res = await fetch(`${API}/mask`, { method: "POST", body: fd });
+          if (!res.ok) throw new Error("Server returned " + res.status);
+          S.blob = await res.blob();
+          S.filename =
+            "protected_" +
+            (S.file ? S.file.name.replace(/\.[^.]+$/, "") : "document") +
+            ".pdf";
+          hd("results-stage");
+          sh("success-stage");
+          document.getElementById("succ-sub").textContent =
+            S.findings.length +
+            " sensitive entities permanently scrubbed from your document.";
+          launchConfetti();
+        } catch (e) {
+          alert(
+            "Redaction failed: " +
+              e.message +
+              "\n\nMake sure backend is running.",
+          );
+          btn.disabled = false;
+          btn.textContent = "🛡 SCRUB & REDACT ALL ENTITIES";
+        }
+      }
+      function doDownload() {
+        if (!S.blob) {
+          alert(
+            "Nothing to download yet. Please scan and redact a document first.",
+          );
+          return;
+        }
+        try {
+          const url = URL.createObjectURL(S.blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = S.filename || "protected_document.pdf";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 5000);
+        } catch (e) {
+          alert("Download error: " + e.message);
+        }
+      }
+
+      /* ── CONFETTI ── */
+      function launchConfetti() {
+        const c = document.getElementById("confetti");
+        const cols = [
+          "#00f5c4",
+          "#7b5ea7",
+          "#ff4d6d",
+          "#f59e0b",
+          "#3b82f6",
+          "#fff",
+        ];
+        for (let i = 0; i < 70; i++) {
+          const el = document.createElement("div");
+          el.className = "cp";
+          el.style.cssText = `left:${Math.random() * 100}%;top:${-Math.random() * 20}px;background:${cols[Math.floor(Math.random() * cols.length)]};animation-delay:${Math.random() * 2}s;animation-duration:${2 + Math.random() * 2}s;width:${4 + Math.random() * 8}px;height:${4 + Math.random() * 8}px;`;
+          c.appendChild(el);
+          setTimeout(() => el.remove(), 5000);
+        }
+      }
+
+      /* ── UTILS ── */
+      function sh(id) {
+        document.getElementById(id).style.display = "block";
+      }
+      function hd(id) {
+        document.getElementById(id).style.display = "none";
+      }
+    </script>
+  </body>
+</html>
